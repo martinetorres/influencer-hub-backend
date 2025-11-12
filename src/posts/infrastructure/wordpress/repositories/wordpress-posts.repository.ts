@@ -1,5 +1,15 @@
 import { graphQLClient } from '../wordpress.api-client';
 import { GET_POST_BY_SLUG, GET_POSTS, GET_SLUGS } from '../queries/wordpress-posts.queries';
+import { PostCategory } from 'src/posts/entities/post.entity';
+
+type WordpressPostCategory = {
+  categoryId: string;
+  name: string;
+}
+
+type WordpressPostCategories = {
+  nodes: WordpressPostCategory[];
+}
 
 type WordpressPostNode = {
   id: string;
@@ -8,6 +18,12 @@ type WordpressPostNode = {
   excerpt?: string;
   date: string;
   content?: string;
+  author?: {
+    node: {
+      name: string;
+    }
+  };
+  categories: WordpressPostCategories;
   featuredImage?: {
     node: {
       sourceUrl: string;
@@ -44,8 +60,13 @@ const fetchPaginatedPosts = async (variables: { first: number; after?: string | 
     return data.posts.nodes.map((node) => ({
         id: node.id,
         title: node.title,
-        slug: node.slug,
         excerpt: node.excerpt,
+        categories: node.categories.nodes.map(cat => ({
+          categoryId: cat.categoryId,
+          name: cat.name
+        })),
+        authorName: node.author?.node.name,
+        slug: node.slug,
         date: node.date,
         featuredImage: node.featuredImage?.node?.sourceUrl,
     }));
@@ -60,6 +81,11 @@ const fetchPostBySlug = async (slug: string) => {
     content: data.post.content,
     featuredImage: data.post.featuredImage?.node?.sourceUrl,
     date: data.post.date,
+    authorName: data.post.author?.node.name,
+    categories: data.post.categories.nodes.map(cat => ({
+      categoryId: cat.categoryId,
+      name: cat.name
+    })),
   };
 };
 
