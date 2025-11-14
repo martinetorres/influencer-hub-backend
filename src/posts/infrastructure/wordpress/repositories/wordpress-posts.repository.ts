@@ -1,6 +1,5 @@
 import { graphQLClient } from '../wordpress.api-client';
 import { GET_POST_BY_SLUG, GET_POSTS, GET_SLUGS } from '../queries/wordpress-posts.queries';
-import { PostCategory } from 'src/posts/entities/post.entity';
 
 type WordpressPostCategory = {
   categoryId: string;
@@ -16,7 +15,7 @@ type WordpressPostNode = {
   slug: string;
   title: string;
   excerpt?: string;
-  date: string;
+  modified: string;
   content?: string;
   author?: {
     node: {
@@ -57,7 +56,7 @@ type SlugResponse = {
 
 const fetchPaginatedPosts = async (variables: { first: number; after?: string | null }) => {
     const data = await graphQLClient.request<PaginatedPostsResponse>(GET_POSTS, variables);
-    return data.posts.nodes.map((node) => ({
+    const posts = data.posts.nodes.map((node) => ({
         id: node.id,
         title: node.title,
         excerpt: node.excerpt,
@@ -67,9 +66,16 @@ const fetchPaginatedPosts = async (variables: { first: number; after?: string | 
         })),
         authorName: node.author?.node.name,
         slug: node.slug,
-        date: node.date,
+        date: node.modified,
         featuredImage: node.featuredImage?.node?.sourceUrl,
     }));
+    return {
+      posts,
+      pageInfo: {
+        hasNextPage: data.posts.pageInfo.hasNextPage,
+        endCursor: data.posts.pageInfo.endCursor
+      }
+    }
 };
 
 const fetchPostBySlug = async (slug: string) => {
@@ -80,7 +86,7 @@ const fetchPostBySlug = async (slug: string) => {
     slug: data.post.slug,
     content: data.post.content,
     featuredImage: data.post.featuredImage?.node?.sourceUrl,
-    date: data.post.date,
+    date: data.post.modified,
     authorName: data.post.author?.node.name,
     categories: data.post.categories.nodes.map(cat => ({
       categoryId: cat.categoryId,
