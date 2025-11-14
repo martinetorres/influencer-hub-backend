@@ -13,7 +13,7 @@ export class SubscriptionsService {
 
   async subscribe(payload: SubscribeDto): Promise<SubscribeResponse> {
     try {
-      const response = await globalThis.fetch(API.ENDPOINTS.SUBSCRIBE, {
+      const response = await fetch(API.ENDPOINTS.SUBSCRIBE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
